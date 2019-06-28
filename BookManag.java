@@ -1,31 +1,43 @@
 package BookManagement;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.InputMismatchException;
+import java.util.Locale;
 import java.util.Scanner;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class BookManag {
-    final private static String pattern1 = "^[0-9]*$";
-    private static int memberselect;   // member number
-    private static int bookselect;     // book number
 
-    public static void main(String[] args)
-            throws ParseException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    final private static String pattern1 = "^[0-9]*$"; // Only number
+    final private static String pattern2 = "^[a-zA-Z0-9]*$"; // alphabet and number
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+    SimpleDateFormat sdf2 = new SimpleDateFormat("EEE, d MMM YYYY HH:mm:ss z", Locale.US);
+    SimpleDateFormat sdf3 = new SimpleDateFormat("MMM dd, yyyy HH:mm:ss a", Locale.US);
+
+    public void init() throws ParseException, InputMismatchException, IOException {
+
         BookManag bm = new BookManag();
-        
+
         Scanner sc = new Scanner(System.in);
-        
+
         Calendar cal = new GregorianCalendar();
         Date today = new Date();
-        Date returnday = new Date();
         cal.setTime(today);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
@@ -33,785 +45,662 @@ public class BookManag {
         ArrayList<Auth> authList = new ArrayList<>();
         ArrayList<Book> bookList = new ArrayList<>();
         ArrayList<Borrow> borrowList = new ArrayList<>();
-
-        Member mem = new Member();
-
-        MemberDBBuild(memberList, authList);
-        BookDBBuild(bookList, borrowList);
-
+        
+        reader(memberList, authList, bookList, borrowList);
         boolean user_menu = true;
+
         while (user_menu) {
-            // ªÁøÎ¿⁄ º±≈√ ∏ﬁ¥∫ √‚∑¬
-            int last_num = 1;
-            System.out.println("»∏ø¯¿ª º±≈√«œººø‰. »∏ø¯¿Ã æ∆¥œΩ√∏È »∏ø¯∞°¿‘¿ª «ÿ¡÷ººø‰.");
-            for (Member m : memberList) {
-                System.out.println(" " + m.getId() + ".   " + m.getName());
-                last_num++;
-            }
-            System.out.println(" " + last_num++ + ".   »∏ø¯∞°¿‘");
-            System.out.println(" " + last_num-- + ".   ¡æ∑·");
-            System.out.println();
 
-            int selectmem = sc.nextInt();
-            sc.nextLine();
+            // ÏÇ¨Ïö©Ïûê ÏÑ†ÌÉù Î©îÎâ¥ Ï∂úÎ†•
+            int mselect = selectMemberMenu(memberList, sc);
 
-            if (selectmem > last_num || selectmem < 0) {
-                System.out.println("«¡∑Œ±◊∑•¿ª ¡æ∑·«’¥œ¥Ÿ.");
-                System.exit(0);
-            } else if (selectmem == (last_num--)) {
-                // »∏ø¯∞°¿‘
-                System.out.println("√ﬂ∞°«œ∞ÌΩÕ¿∫ ∏‚πˆºˆ∏¶ ¿‘∑¬«œººø‰ ");
-                int k = sc.nextInt();
-                sc.nextLine();
-                for (int i = 5; i < k + 5; i++) {
-                    Member stu = new Member();
-                    stu.setId(i);
-                    System.out.println("»∏ø¯¿« ¿Ã∏ß¿ª ¿‘∑¬«œººø‰ ");
+            if (mselect == (memberList.size() + 2)) {
+                // ÌîÑÎ°úÍ∑∏Îû® Ï¢ÖÎ£å
+                System.out.println("ÌîÑÎ°úÍ∑∏Îû®ÏùÑ Ï¢ÖÎ£åÌï©ÎãàÎã§. ");
+                break;
+            } else if (mselect == (memberList.size() + 1)) {
+                // ÌöåÏõêÍ∞ÄÏûÖ
+                int ask_count1 = 1, ask_count2 = 1;
+
+                while (ask_count1 <= 3) {
+                    System.out.println("ÌöåÏõêÏùò Ïù¥Î¶ÑÏùÑ ÏûÖÎ†•ÌïòÏÑ∏Ïöî.  (ÏïåÌååÎ≤≥ ÎåÄÏÜåÎ¨∏ÏûêÏôÄ Ïà´ÏûêÎßå ÌóàÏö©Ìï®) ");
                     String name = sc.nextLine();
-                    System.out.println("»∏ø¯¿« ª˝≥‚ø˘¿œ¿ª ¿‘∑¬«œººø‰. øπ) 2019≥‚6ø˘24¿œ => 20190624 ");
-                    boolean validation = false;
-                    String birth2 = "";
-                    while (!validation) {
-                        String birth1 = sc.next();
-                        validation = birth1.matches(pattern1);
-                        if (validation && birth1.length() == 8) {
 
-                            birth2 = birth1;
-                        } else {
-                            System.out.println("8¿⁄∏Æ¿« º˝¿⁄∏∏¿ª ¿‘∑¬«œººø‰ .");
-                            birth2 = birth1;
-                            validation = false;
+                    System.out.println("ÌöåÏõêÏùò ÏÉùÎÖÑÏõîÏùºÏùÑ ÏòàÏ†úÏôÄ Í∞ôÏù¥ Ïà´ÏûêÎ°ú ÏûÖÎ†•ÌïòÏÑ∏Ïöî. Ïòà) 2019ÎÖÑ6Ïõî24Ïùº => 20190624 ");
+                    String birth = sc.nextLine();
 
+                    if ((birth.matches(pattern1)) && (birth.length() == 8)
+                            && (registerMember(memberList, name, birth))) {
+                        // True : register
+                        Member mb = new Member();
+                        mb.setId(memberList.size() + 1);
+                        mb.setName(name);
+                        mb.setBirth(sdf.parse(birth));
+                        while (ask_count2 <= 3) {
+                            // ID ÏôÄ PW ÏûÖÎ†•
+                            System.out.println("ÌöåÏõêÏùò IDÎ•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî. (ÏïåÌååÎ≤≥ ÎåÄÏÜåÎ¨∏ÏûêÏôÄ Ïà´ÏûêÎßå ÌóàÏö©Ìï®)");
+                            String id = sc.nextLine();
+
+                            System.out.println("ÌöåÏõêÏùò PWÎ•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî. (ÏïåÌååÎ≤≥ ÎåÄÏÜåÎ¨∏ÏûêÏôÄ Ïà´ÏûêÎßå ÌóàÏö©Ìï®)");
+                            String pw = sc.nextLine();
+                            if (registerAuth(authList, id, pw)) {
+                                // ÌöåÏõê Í∞ÄÏûÖ
+                                memberList.add(mb);
+                                Auth at = new Auth();
+                                at.setMemberId(authList.size() + 1);
+                                at.setUserId(id);
+                                at.setPw(pw);
+                                authList.add(at);
+                                ask_count1 = 4;
+                                ask_count2 = 4;
+                            } else if (ask_count2 == 3) {
+                                ask_count2 += 1;
+                                ask_count1 = 4;
+                                System.out.println("3Î≤à ÏûÖÎ†• Ïò§Î•òÎ°ú Ïù∏Ìï¥ ÏÇ¨Ïö©Ïûê Î©îÎâ¥Î°ú Í∞ëÎãàÎã§.");
+                                break;
+                            } else {
+                                System.out.println(ask_count2 + "Î≤à ID ÎòêÎäî PWÏùÑ ÏûòÎ™ª ÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§.");
+                                ask_count2 += 1;
+                            }
                         }
+                    } else if (ask_count1 == 3) {
+                        ask_count1 += 1;
+                        System.out.println("3Î≤à ÏûÖÎ†• Ïò§Î•òÎ°ú Ïù∏Ìï¥ ÏÇ¨Ïö©Ïûê Î©îÎâ¥Î°ú Í∞ëÎãàÎã§.");
+                        break;
+                    } else {
+                        System.out.println(ask_count1 + "Î≤à Ïù¥Î¶Ñ ÎòêÎäî ÏÉùÎÖÑÏõîÏùºÏùÑ ÏûòÎ™ª ÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§.");
+                        ask_count1 += 1;
                     }
-                    Date birth = stringtodate(birth2);
-
-                    System.out.println("µÓ∑œ«œ∞Ì¿⁄«œ¥¬ id∏¶ ¿‘∑¬«œººø‰");
-                    String id = sc.next();
-                    stu.setName(name);
-                    stu.setBirth(birth);
-                    memberList.add(stu);
-
-                    Auth auth = new Auth();
-                    auth.setMemberId(stu.getId());// 1
-
-                    System.out.println("µÓ∑œ«œ∞Ì¿⁄«œ¥¬ pw∏¶ ¿‘∑¬«œººø‰");
-                    String pw = sc.next();
-
-                    auth.setUserId(id);
-                    String pw1 = pw;
-                    auth.setPw(convertToSha2(pw1));
-                    authList.add(auth);
-                }
-                sc.nextLine();
+                } // while
 
             } else { // member menu member selected
-                // ∑Œ±◊¿Œ
-                int login_count = 0;
-                selectmem -= 1;
-                while(login_count<3) {
-                    System.out.println("id∏¶ ¿‘∑¬«ÿ¡÷ººø‰: ");
+                // Î°úÍ∑∏Ïù∏
+                int login_count = 1;
+                boolean login = false;
+                while (login_count <= 3) {
+                    // ID ÏôÄ PW ÏûÖÎ†•
+                    System.out.println("ÌöåÏõêÏùò IDÎ•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî.");
                     String id = sc.nextLine();
-                    System.out.println("∫Òπ–π¯»£∏¶ ¿‘∑¬«ÿ¡÷ººø‰: ");
+
+                    System.out.println("ÌöåÏõêÏùò PWÎ•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî.");
                     String pw = sc.nextLine();
-                    Member logInUser = new Member();
-                    for (Auth a : authList) {
-                        if (a.getUserId().equals(id)) {
-                            if (pw.equals(a.getPw())) {
-                                for (Member s : memberList) {
-                                    if (s.getId() == a.getMemberId()) {
-                                        logInUser = s;
-                                        break;
-                                    }
+
+                    // System.out.println("Î°úÍ∑∏Ïù∏ ÌïòÏòÄÏäµÎãàÎã§. ready");
+
+                    if (checkAuth(authList, id, pw, mselect - 1)) {
+                        login = true;
+                        mselect = indexAuth(authList, id, pw);
+                        System.out.println("Î°úÍ∑∏Ïù∏ ÌïòÏòÄÏäµÎãàÎã§.");
+                        login_count = 4;
+                    } else if (login_count == 3) {
+                        login_count += 1;
+                        System.out.println("3Î≤à ÏûÖÎ†• Ïò§Î•òÎ°ú Ïù∏Ìï¥ ÏÇ¨Ïö©Ïûê Î©îÎâ¥Î°ú Í∞ëÎãàÎã§.");
+                        break;
+                    } else {
+                        System.out.println(login_count + "Î≤à ID ÎòêÎäî PWÏùÑ ÏûòÎ™ª ÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§.");
+                        login_count += 1;
+                    }
+                } // while
+
+                while (login) {
+                    // Î©îÎâ¥ Ï∂úÎ†•
+                    System.out.println("-------------------------------------------");
+                    System.out.println("   1. ÎåÄÏ∂ú     2. Î∞òÎÇ©     3. ÎåÄÏó¨ ÌòÑÌô©  4. Î°úÍ∑∏ÏïÑÏõÉ");
+                    System.out.println("-------------------------------------------");
+                    int selectmenu = sc.nextInt();
+                    sc.nextLine();
+                    // ÎåÄÏó¨
+                    if (selectmenu == 1) {
+                        // ÎèÑÏÑú Î¶¨Ïä§Ìä∏ Ï∂úÎ†•
+                        if (checkbookRental(mselect, borrowList)) {
+                        
+                        bookRental(mselect, memberList, bookList, borrowList, sc);
+                        }else {
+                            System.out.println("ÎåÄÏó¨Ìïú Ï±ÖÏù¥ ÎßéÏäµÎãàÎã§. Î∞òÎÇ©ÌïòÏãúÍ≥† ÎåÄÏó¨ÌïòÏÑ∏Ïöî.");
+                        }
+                    } else if (selectmenu == 2) {
+                        // Î∞òÎÇ©
+                        bookReturn(mselect, memberList, bookList, borrowList, sc);
+                    } else if (selectmenu == 3) {
+                        // ÏÇ¨Ïö©ÏûêÎåÄÏó¨ÌòÑÌô© Î¶¨Ïä§Ìä∏ Ï∂úÎ†•
+                        memberRentalList(mselect, memberList, bookList, borrowList, sc);
+                    } else if (selectmenu == 4) {
+                        login = false;
+                        login_count = 4;
+                    } else {
+                        System.out.println("ÏûòÎ™ªÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§. Îã§Ïãú ÏûÖÎ†•ÌïòÏÑ∏Ïöî.");
+                        login = true;
+                    }
+
+                } // while(Login)
+            }
+        }
+        write(memberList, authList, bookList, borrowList);
+    }
+
+    private boolean checkbookRental(int select, ArrayList<Borrow> borrowList) {
+        int bookcount = 0;
+
+        for (Borrow br : borrowList) {
+            if (br.getMemberId() == select) {
+                if (br.isStatus()) {
+                    bookcount++;
+                } else {
+                    bookcount--;
+                }
+            }
+
+        }
+        if (bookcount >= 5) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private void reader(ArrayList<Member> memberList, ArrayList<Auth> authList, ArrayList<Book> bookList, ArrayList<Borrow> borrowList) throws IOException, ParseException {
+            String temp1 = "";
+            String reader1 = "";
+            BufferedReader bReader1 = new BufferedReader(new FileReader("book.txt"));
+            while ((temp1 = bReader1.readLine()) != null) {
+                reader1 += temp1 + "\n";
+            }
+    
+            JsonParser p = new JsonParser();
+            JsonElement element = p.parse(reader1);
+    
+            JsonArray jArray = element.getAsJsonArray();
+            for (JsonElement e : jArray) {
+                JsonObject o = e.getAsJsonObject();
+                Book b = new Book();
+                b.setBookid(o.get("bookid").getAsInt());
+                b.setTitle(o.get("title").getAsString());
+                b.setAuthor(o.get("author").getAsString());
+                b.setPublisher(o.get("publisher").getAsString());
+    
+                bookList.add(b);
+    
+            }
+            String temp2 = "";
+            String reader2 = "";
+            BufferedReader bReader2 = new BufferedReader(new FileReader("borrow.txt"));
+            while ((temp2 = bReader2.readLine()) != null) {
+                reader2 += temp2 + "\n";
+            }
+    
+            JsonParser p2 = new JsonParser();
+            JsonElement element2 = p2.parse(reader2);
+            JsonArray jArray2 = element2.getAsJsonArray();
+            for (JsonElement e1 : jArray2) {
+                JsonObject o1 = e1.getAsJsonObject();
+                Borrow b2 = new Borrow();
+                b2.setBookId(o1.get("bookId").getAsInt());
+                b2.setStatus(o1.get("status").getAsBoolean());
+                b2.setMemberId(o1.get("memberId").getAsInt());
+                
+                String o4 = "";
+                String o3 = "";
+                
+                if ((o1.get("startDay")) != null) {
+                    o4 = o1.get("startDay").getAsString();
+                    b2.setStartDay(sdf3.parse(o4));
+                    o3 = o1.get("returnDay").getAsString();
+                    b2.setReturnDay(sdf3.parse(o3));
+    
+                } else {
+                    Date o5 = null;
+                    Date o6 = null;
+                    b2.setStartDay(o5);
+                    b2.setReturnDay(o5);
+    
+                }
+    
+                borrowList.add(b2);
+            }
+                String temp3 = "";
+                String reader3 = "";
+                BufferedReader bReader3 = new BufferedReader(new FileReader("member.txt"));
+                while ((temp3 = bReader3.readLine()) != null) {
+                    reader3 += temp3 + "\n";
+                }
+    
+                JsonParser p3 = new JsonParser();
+                JsonElement element3 = p3.parse(reader3);
+                
+                JsonArray jArray3 = element3.getAsJsonArray();
+                for (JsonElement e3 : jArray3) {
+                   
+                    
+                    JsonObject o2 = e3.getAsJsonObject();
+                    Member m1 = new Member();
+                    m1.setId(o2.get("id").getAsInt());
+                    m1.setName(o2.get("name").getAsString());
+                    String o6= "";
+                    o6 = o2.get("birth").getAsString();
+                    m1.setBirth(sdf3.parse(o6));
+                    memberList.add(m1);
+                    
+                }
+                String temp4 = "";
+                String reader4 = "";
+                BufferedReader bReader4 = new BufferedReader(new FileReader("auth.txt"));
+                while ((temp4 = bReader4.readLine()) != null) {
+                    reader4 += temp4 + "\n";
+                }
+    
+                ArrayList<Auth> authList2 = new ArrayList<>();
+    
+                JsonParser p4 = new JsonParser();
+                JsonElement element4 = p4.parse(reader4);
+    
+                JsonArray jArray4 = element4.getAsJsonArray();
+                for (JsonElement e4 : jArray4) {
+                    JsonObject o31 = e4.getAsJsonObject();
+                    Auth a1 = new Auth();
+                    a1.setMemberId(o31.get("memberId").getAsInt());
+                    a1.setPw(o31.get("pw").getAsString());
+                    a1.setUserId(o31.get("userId").getAsString());
+                    authList.add(a1);
+    
+                
+            }
+            
+    }
+    
+    private void write(ArrayList<Member> memberList, ArrayList<Auth> authList, ArrayList<Book> bookList,
+            ArrayList<Borrow> borrowList) throws IOException {
+        String booklist = bookList.toString();
+        BufferedWriter bWriter = new BufferedWriter(new FileWriter("book.txt"));
+        
+        bWriter.write(booklist.toString());
+        bWriter.close();
+        
+        String borrowlist = borrowList.toString();
+        BufferedWriter bWriter2 = new BufferedWriter(new FileWriter("borrow.txt"));
+        
+        bWriter2.write(borrowlist.toString());
+        bWriter2.close();
+        
+        String memberlist = memberList.toString();
+        BufferedWriter bWriter3 = new BufferedWriter(new FileWriter("member.txt"));
+        
+        bWriter3.write(memberlist.toString());
+        bWriter3.close();
+        
+        String authlist = authList.toString();
+        BufferedWriter bWriter4 = new BufferedWriter(new FileWriter("auth.txt"));
+        
+        bWriter4.write(authlist.toString());
+        bWriter4.close();
+        
+    }
+
+    private static int selectMemberMenu(ArrayList<Member> memberList, Scanner sc) throws InputMismatchException {
+
+        int iselect = 0;
+        String select = "";
+        boolean exit = true;
+
+        do {
+            System.out.println("ÏïÑÎûòÏôÄ Í∞ôÏù¥ ÌöåÏõêÏùÑ ÏÑ†ÌÉùÌïòÍ±∞ÎÇò ÌöåÏõêÍ∞ÄÏûÖ ÎòêÎäî Ï¢ÖÎ£åÎ•º ÏÑ†ÌÉùÌïòÍ∏∞ ÏúÑÌï¥ Î≤àÌò∏Î•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî.");
+
+            for (Member m : memberList) {
+                System.out.println(" " + m.getId() + ".   " + m.getName());
+            }
+
+            System.out.println(" " + (memberList.size() + 1) + ".   ÌöåÏõêÍ∞ÄÏûÖ");
+            System.out.println(" " + (memberList.size() + 2) + ".   Ï¢ÖÎ£å");
+            select = sc.nextLine();
+        } while ((!select.matches(pattern1)) || (Integer.parseInt(select) > (memberList.size() + 2)));
+
+        iselect = Integer.parseInt(select);
+
+        return iselect;
+    }
+
+    private static boolean registerMember(ArrayList<Member> memberList, String name, String birth)
+            throws ParseException {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+
+        String st = birth.substring(0, 4);
+        int year = Integer.parseInt(st);
+        st = birth.substring(4, 6);
+        int month = Integer.parseInt(st);
+        st = birth.substring(6, 8);
+        int day = Integer.parseInt(st);
+        // System.out.println(year + " " + month + " " + day);
+
+        for (Member mbr : memberList) {
+            if ((mbr.getName()).equals(name) && sdf.format(mbr.getBirth()).equals(birth)) {
+                System.out.println("Í∏∞Ï°¥Ïóê Îì±Î°ùÎêú ÌöåÏõêÏûÖÎãàÎã§.");
+                return false;
+            }
+        }
+        if ((name.length() > 0) && (birth.matches(pattern1)) && (birth.length() == 8) && (year >= 1920)
+                && (year <= 2019) && (month >= 1) && (month <= 12) && (day >= 1) && (day <= 31)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean registerAuth(ArrayList<Auth> authList, String id, String pw) {
+
+        for (Auth atl : authList) {
+            if (atl.getUserId().equals(id)) {
+                System.out.println("Í∏∞Ï°¥Ïóê Îì±Î°ùÎêú ID ÏûÖÎãàÎã§.");
+                return false;
+            }
+        }
+        if ((pw.length() > 0) && (pw.matches(pattern2)) && (id.length() > 0) && (id.matches(pattern2))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean checkAuth(ArrayList<Auth> authList, String id, String pw, int mselect) {
+
+        boolean check = false;
+
+        if ((authList.get(mselect).getUserId().contentEquals(id))
+                && (authList.get(mselect).getPw().contentEquals(pw))) {
+            check = true;
+        }
+        // System.out.println(check);
+        return check;
+    }
+
+    private static int indexAuth(ArrayList<Auth> authList, String id, String pw) {
+
+        for (Auth atl : authList) {
+            if ((atl.getUserId().equals(id)) && (atl.getPw().equals(pw))) {
+                // System.out.println("Í∏∞Ï°¥Ïóê Îì±Î°ùÎêú ÌöåÏõêÏûÖÎãàÎã§. "+ atl.getMemberId());
+                return atl.getMemberId();
+            }
+        }
+        return 0;
+    }
+
+    // ÎåÄÏó¨ Î©îÏÜåÎìú
+    private static void bookRental(int member, ArrayList<Member> memberList, ArrayList<Book> bookList, ArrayList<Borrow> borrowList, Scanner sc) {
+        // ÎèÑÏÑú Î¶¨Ïä§Ìä∏ Ï∂úÎ†•
+//        System.out.println(
+//                "----------------------------------------------------------------------------------------------------------------------------");
+//        System.out.println("   " + "rental status" + "\t" + "title" + "\t\t\t\t" + "author" + "\t\t\t\t" + "publisher");
+//        System.out.println(
+//                "----------------------------------------------------------------------------------------------------------------------------");
+//        for (Book b : bookList) {
+//            for (Borrow brw : borrowList) {
+//                if (b.getBookid() == brw.getBookId()) {
+//                    System.out.printf("%2d. %-20s %-35s %-35s %-35s \n", b.getBookid(),
+//                            brw.isStatus() == true ? "ÎåÄÏó¨Ï§ë" : "ÎåÄÏ∂úÍ∞ÄÎä•", b.getTitle(), b.getAuthor(), b.getPublisher());
+//                }
+//
+//            }
+//        }
+//
+//        boolean rentalRepeat = true;
+//        do {
+//            // ÎèÑÏÑú ÏÑ†ÌÉù
+//            System.out.println("ÎåÄÏó¨Ìï† Ï±ÖÏùÑ ÏÑ†ÌÉùÌïòÏÑ∏Ïöî.");
+//            String stringBookNum = sc.nextLine();
+//            int bookSize = bookList.size();
+//
+//            if(stringBookNum.matches(pattern1)) {
+//                int booknum = Integer.parseInt(stringBookNum);
+//                bookRental: for (Book b : bookList) {
+//                    for (Borrow brw : borrowList) {
+//                        if (b.getBookid() == booknum) {
+//                            if (borrowList.get(booknum - 1).isStatus() == false) {
+//                                System.out.println(bookList.get(booknum - 1).getTitle() + "Í∞Ä ÎåÄÏó¨ÎêòÏóàÏäµÎãàÎã§.");
+//                                borrowList.get(booknum - 1).setStatus(true);
+//                                borrowList.get(booknum - 1).setMemberId(member);
+//    
+//                                // ÎåÄÏó¨Í∞ÄÎä• Í∏∞Í∞Ñ Ï∂úÎ†•
+//                                Calendar cal = new GregorianCalendar();
+//                                Date today = new Date();
+//                                Date returnday = new Date();
+//                                cal.setTime(today);
+//                                SimpleDateFormat sdf = new SimpleDateFormat("yyyyÎÖÑ MMÏõî ddÏùº");
+//                                borrowList.get(booknum - 1).setStartDay(today);
+//                                cal.add(Calendar.DATE, 14);
+//                                returnday = cal.getTime();
+//                                borrowList.get(booknum - 1).setReturnDay(returnday);
+//                                System.out.println("Î∞òÎÇ©Ìï† ÎÇ†ÏßúÎäî " + sdf.format(returnday) + "ÏûÖÎãàÎã§.");
+//                                rentalRepeat = false;
+//                                break;
+//    
+//                            } else {
+//                                System.out.println(bookList.get(booknum - 1).getTitle() + "ÏùÄ(Îäî) Ïù¥ÎØ∏ ÎåÄÏó¨Ï§ëÏù∏ ÎèÑÏÑúÏûÖÎãàÎã§.");
+//                                rentalRepeat = true;
+//                                break;
+//                            }
+//                        } else if (booknum > bookSize) {
+//                            System.out.print("Ï°¥Ïû¨ÌïòÏßÄÏïäÎäî ÎèÑÏÑúÏûÖÎãàÎã§. ");
+//                            rentalRepeat = true;
+//                            break bookRental;
+//                        }
+//                    }
+//                }
+//            }else {
+//                System.out.print("ÏûòÎ™ªÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§. ");
+//                rentalRepeat = true;
+//            }
+//
+//        } while (rentalRepeat);
+            
+        boolean isRental = true;
+        int exitButton = bookList.size() + 1;
+        for (Book b : bookList) {
+            for (Borrow brw : borrowList) {
+                if (b.getBookid() == brw.getBookId()) {
+                    if (brw.isStatus() == true) {
+                        isRental = false;
+                    } else {
+                        isRental = true;
+                    }
+                }
+            }
+            System.out.printf("%2d. %-20s %-35s %-35s %-35s \n", b.getBookid(), (isRental == false ? "ÎåÄÏó¨Ï§ë" : "ÎåÄÏ∂úÍ∞ÄÎä•"),
+                    b.getTitle(), b.getAuthor(), b.getPublisher());
+        }
+        System.out.println(exitButton + ". exit");
+
+        boolean rentalRepeat = true;
+        do {
+
+            // ÎèÑÏÑú ÏÑ†ÌÉù
+            System.out.println("ÎåÄÏó¨Ìï† Ï±ÖÏùÑ ÏÑ†ÌÉùÌïòÏÑ∏Ïöî.");
+            String stringBookNum = sc.nextLine();
+
+            int bookSize = bookList.size();
+            if (stringBookNum.matches(pattern1)) {
+                int booknum = Integer.parseInt(stringBookNum);
+                if (booknum >= exitButton) {
+                    rentalRepeat = false;
+                    break;
+
+                } else {
+                    bookRental: for (Book b : bookList) {
+                        for (Borrow brw : borrowList) {
+                            if (b.getBookid() == booknum) {
+                                if (borrowList.get(booknum - 1).isStatus() == false) {
+                                    System.out.println(bookList.get(booknum - 1).getTitle() + "Í∞Ä 1 ÎåÄÏó¨ÎêòÏóàÏäµÎãàÎã§.");
+                                    //borrowList.get(booknum - 1).setStatus(true);
+                                    //borrowList.get(booknum - 1).setMemberId(member);
+
+                                    // ÎåÄÏó¨Í∞ÄÎä• Í∏∞Í∞Ñ Ï∂úÎ†•
+                                    Calendar cal = new GregorianCalendar();
+                                    Date today = new Date();
+                                    Date returnday = new Date();
+                                    cal.setTime(today);
+                                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyÎÖÑ MMÏõî ddÏùº");
+                                    borrowList.get(booknum - 1).setStartDay(today);
+                                    cal.add(Calendar.DATE, 14);
+                                    returnday = cal.getTime();
+
+                                    Borrow br = new Borrow();
+                                    br.setBookId(booknum);
+                                    br.setMemberId(member);
+                                    br.setStartDay(today);
+                                    br.setReturnDay(returnday);
+                                    br.setStatus(true);
+                                    borrowList.add(br);
+
+//                                    for (Borrow bb : borrowList) {
+//                                        System.out.println(bb.toString());
+//                                    }
+
+                                    System.out.println(bookList.get(booknum - 1).getTitle() + "Í∞Ä ÎåÄÏó¨ÎêòÏóàÏäµÎãàÎã§.");
+                                    System.out.println("Î∞òÎÇ©Ìï† ÎÇ†ÏßúÎäî " + sdf.format(returnday) + "ÏûÖÎãàÎã§.");
+
+                                    rentalRepeat = false;
+                                    break;
+
+                                } else {
+                                    System.out.println(bookList.get(booknum - 1).getTitle() + "ÏùÄ(Îäî) Ïù¥ÎØ∏ ÎåÄÏó¨Ï§ëÏù∏ ÎèÑÏÑúÏûÖÎãàÎã§.");
+                                    rentalRepeat = true;
+                                    break;
+                                }
+                            } 
+//                            else if (booknum > (bookSize + 1)) {
+//                                System.out.println("Ï°¥Ïû¨ÌïòÏßÄÏïäÎäî ÎèÑÏÑúÏûÖÎãàÎã§.");
+//                                rentalRepeat = true;
+//                                break bookRental;
+//
+//                            } else {
+//                                System.out.print("ÏûòÎ™ªÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§. ");
+//                                rentalRepeat = true;
+//                                break bookRental;
+//                            }
+                        }
+                    }
+                }
+            }
+        } while (rentalRepeat);
+        
+    }
+
+    // Î∞òÎÇ© Î©îÏÜåÎìú
+    private static void bookReturn(int member, ArrayList<Member> memberList, ArrayList<Book> bookList,
+            ArrayList<Borrow> borrowList, Scanner sc) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        boolean returnRepeat = true;
+        boolean booksForReturn = false;
+
+        // Î∞òÎÇ©Ìï† ÎèÑÏÑúÍ∞Ä ÏûàÎäîÏßÄ ÌôïÏù∏
+        for (Borrow brw : borrowList) {
+            if (brw.getMemberId() == member) {
+                booksForReturn = true;
+                break;
+            }
+        }
+        if (booksForReturn) { // Î∞òÎÇ©Ìï† ÎèÑÏÑúÍ∞Ä ÏûàÎã§Î©¥
+            memberRentalList(member, memberList, bookList, borrowList, sc);
+            while (returnRepeat) {
+                System.out.println("Î∞òÎÇ©Ìï† ÎèÑÏÑú Î≤àÌò∏Î•º ÏûÖÎ†•ÌïòÏÑ∏Ïöî.");
+                String stringBookNum = sc.nextLine();
+                
+                if(stringBookNum.matches(pattern1)) {
+                    int booknum = Integer.parseInt(stringBookNum);
+                    
+                 // ÎåÄÏó¨Í∞ÄÎä• Í∏∞Í∞Ñ Ï∂úÎ†•
+                    Calendar cal = new GregorianCalendar();
+                    Date today = new Date();
+                    //Date returnday = new Date();
+                    cal.setTime(today);
+                    //SimpleDateFormat sdf = new SimpleDateFormat("yyyyÎÖÑ MMÏõî ddÏùº");
+                    //borrowList.get(booknum - 1).setStartDay(today);
+                    //cal.add(Calendar.DATE, 14);
+                    today = cal.getTime();
+                    
+                    Borrow br = new Borrow();
+                    br.setBookId(booknum);
+                    br.setMemberId(member);
+                    //br.setStartDay(today);
+                    br.setReturnDay(today);
+                    br.setStatus(false);
+                    borrowList.add(br);
+                    break;
+                    /*
+                    int booknum = Integer.parseInt(stringBookNum);
+                    for (int i = 0; i < borrowList.size(); i++) {
+                        if (borrowList.get(i).getMemberId() == member) {
+                            if (borrowList.get(i).getBookId() == booknum) {
+                                if (borrowList.get(i).isStatus() == true) {
+    
+                                    borrowList.get(booknum - 1).setStatus(false);
+                                    borrowList.get(booknum - 1).setMemberId(0);
+                                    borrowList.get(booknum - 1).setStartDay(null);
+                                    borrowList.get(booknum - 1).setReturnDay(null);
+                                    System.out.println("Î∞òÎÇ©ÎêòÏóàÏäµÎãàÎã§.");
+                                    returnRepeat = false;
+                                    break;
+                                } else {
+                                    System.out.println("ÎåÄÏó¨Ï§ëÏù∏ ÎèÑÏÑúÍ∞Ä ÏïÑÎãôÎãàÎã§.");
+                                    break;
+    
                                 }
                             }
                         }
-                    }
-                    if (logInUser.getName() != null) {
-                        bm.memberselect = memberList.get(selectmem).getId();
-                       System.out.println("∑Œ±◊¿Œø° º∫∞¯«œºÃΩ¿¥œ¥Ÿ.");
-                       System.out.println("ªÁøÎ¿⁄ ¿Ã∏ß: " + logInUser.getName());
-                       boolean exit = false;
-                       while(!exit) {
-                           // ∏ﬁ¥∫ √‚∑¬
-                           System.out.println("------------------------------------------------");
-                           System.out.println("   1. ¥Î√‚     2. π›≥≥     3. ¥Îø© «ˆ»≤  4. ªÁøÎ¿⁄º±≈√  5.¡æ∑·      ");
-                           System.out.println("------------------------------------------------");
-                           int selectmenu = sc.nextInt();
-                           sc.nextLine();
-                           // ¥Îø©
-                           if (selectmenu == 1) {
-                               // µµº≠ ∏ÆΩ∫∆Æ √‚∑¬
-                               System.out.println("----------------------------------------------------------------------------------------------------------------------------");
-                               System.out.printf("%-20s %-35s %-35s %-35s\n", "Rental status", "title", "author", "publisher");
-                               System.out.println("----------------------------------------------------------------------------------------------------------------------------");
-                               for (Book b : bookList) { //¡ﬂ∫πµ«¥¬ ∞™ √‚∑¬µ«¥¬ ∞≈ ºˆ¡§«œ±‚!!!!
-                                   for (Borrow brw : borrowList) {
-                                       if (b.getBookid() == brw.getBookId()) {
-                                           System.out.printf("%2d. %-20s %-35s %-35s %-35s \n", b.getBookid(),
-                                                   brw.isStatus() == true ? "¥Îø©¡ﬂ" : "¥Î√‚∞°¥…", b.getTitle(), b.getAuthor(),
-                                                   b.getPublisher());
-                                       }
-                                   }
-                               }
-                               // µµº≠ º±≈√
-                               System.out.println("¥Îø©«“ √•¿ª º±≈√«œººø‰.");
-                               int booknum = sc.nextInt();
-                               sc.nextLine();
-                               for (Book b : bookList) {
-                                   for (Borrow brw : borrowList) {
-                                       if(b.getBookid() == booknum) {
-                                           if(borrowList.get(booknum - 1).isStatus() == false) {
-                                               bm.bookselect = bookList.get(booknum - 1).getBookid();
-                                               System.out.println(bookList.get(booknum - 1).getTitle() + "∞° ¥Îø©µ«æ˙Ω¿¥œ¥Ÿ.");
-                                               borrowList.get(booknum - 1).setStatus(true);
-                                               borrowList.get(booknum - 1).setMemberId(bm.memberselect);
-                                               // ¥Îø©∞°¥… ±‚∞£ √‚∑¬
-                                               borrowList.get(booknum - 1).setStartDay(today); 
-                                               cal.add(Calendar.DATE, 14);
-                                               returnday = cal.getTime();
-                                               borrowList.get(booknum - 1).setReturnDay(returnday);
-                                               System.out.println("π›≥≥«“ ≥Ø¬•¥¬ " + sdf.format(returnday) + "¿‘¥œ¥Ÿ.");
-                                               break;
-                                           }else {
-                                               System.out.println(bookList.get(booknum - 1).getTitle() + "¿∫(¥¬) ¿ÃπÃ ¥Îø©¡ﬂ¿Œ µµº≠¿‘¥œ¥Ÿ.");
-                                               break;
-                                           }
-                                       }
-                                       
-                                   }
-                               }
-
-                           } else if (selectmenu == 2) {
-                               // π›≥≥
-                               //π›≥≥«“ µµº≠∞° ¿÷¥¬¡ˆ »Æ¿Œ
-                               boolean booksForReturn = false;
-                               for(Borrow brw : borrowList) {
-                                   if(brw.getMemberId() == bm.memberselect) {
-                                       booksForReturn = true;
-                                       break;
-                                   }
-                               }
-                               if(booksForReturn) { // π›≥≥«“ µµº≠∞° ¿÷¥Ÿ∏È
-                                   System.out.println("< ªÁøÎ¿⁄ ¥Î√‚ µµº≠ ∏ÆΩ∫∆Æ >");
-                                   System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------");
-                                   System.out.printf("%-15s %-30s %-30s %-30s %-20s %-20s\n", "No.", "title", "author", "publisher", "rentalDate", "returnDate");
-                                   System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------");
-                                   for(int i = 0; i < borrowList.size(); i++) {
-                                       if ((borrowList.get(i).getMemberId() == bm.memberselect)) {
-                                           System.out.printf("%2d %-35s %-35s %-35s %-20s %-20s\n", borrowList.get(i).getBookId(), bookList.get(i).getTitle(), bookList.get(i).getAuthor(), bookList.get(i).getPublisher(), sdf.format(borrowList.get(i).getStartDay()), sdf.format(borrowList.get(i).getReturnDay()));
-                                       }
-                                   }
-                                   System.out.println("π›≥≥«“ µµº≠ π¯»£∏¶ ¿‘∑¬«œººø‰.");
-                                   int booknum = sc.nextInt();
-                                   sc.nextLine();
-                                   for (int i = 0; i < borrowList.size(); i++) {
-                                       if (borrowList.get(i).getMemberId() == bm.memberselect) {
-                                           if ((borrowList.get(i).getBookId() == booknum)) {
-                                               System.out.println("π›≥≥µ«æ˙Ω¿¥œ¥Ÿ.");
-                                               borrowList.get(booknum - 1).setStatus(false);
-                                               borrowList.get(booknum - 1).setMemberId(0);
-                                               borrowList.get(booknum - 1).setStartDay(null);
-                                               borrowList.get(booknum - 1).setReturnDay(null);
-                                               
-                                           }
-                                       }
-                                   }
-                                   
-                               }else { // π›≥≥«“ µµº≠∞° æ¯¥Ÿ∏È
-                                   System.out.println("π›≥≥«“ µµº≠∞° æ¯Ω¿¥œ¥Ÿ.");
-                               }
-                               
-                           }else if (selectmenu == 3) {
-                               // ªÁøÎ¿⁄¥Îø©«ˆ»≤ ∏ÆΩ∫∆Æ √‚∑¬
-                               System.out.println("< ªÁøÎ¿⁄ ¥Î√‚ µµº≠ ∏ÆΩ∫∆Æ >");
-                               System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------");
-                               System.out.printf("%-15s %-30s %-30s %-30s %-20s %-20s\n", "No.", "title", "author", "publisher", "rentalDate", "returnDate");
-                               System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------");
-                               for(int i = 0; i < borrowList.size(); i++) {
-                                   if ((borrowList.get(i).getMemberId() == bm.memberselect)) {
-                                       System.out.printf("%2d %-35s %-35s %-35s %-20s %-20s\n", borrowList.get(i).getBookId(), bookList.get(i).getTitle(), bookList.get(i).getAuthor(), bookList.get(i).getPublisher(), sdf.format(borrowList.get(i).getStartDay()), sdf.format(borrowList.get(i).getReturnDay()));                             
-                                   }
-                               }
-                           }else if( selectmenu == 4) {
-                               System.out.println("ªÁøÎ¿⁄ ∏ﬁ¥∫∑Œ ∞©¥œ¥Ÿ.");
-                               login_count = 3;
-                               break;
-
-                           }else {
-                               // ¡æ∑·
-                               login_count = 3;
-                               break;
-                           }
-                       
-                       } //while(∏ﬁ¥∫º±≈√)
-                } else {
-                        //∑Œ±◊¿Œ Ω«∆–
-                        System.out.println("∑Œ±◊¿Œ Ω«∆–");
-                        login_count += 1;
-                        //3»∏ ¿ÃªÛ ∆≤∏∞ ∞ÊøÏ
-                        if (login_count >=3) {
-                            System.out.println("ªÁøÎ¿⁄ ∏ﬁ¥∫∑Œ ∞©¥œ¥Ÿ.");
-                            break;
-                        }
-                    
-                }
-                    
-            }
-        }
-    }
-
-    System.out.println("«¡∑Œ±◊∑•¿ª ¡æ∑·«’¥œ¥Ÿ.");
-    //break;
-}
-
-
-
-    private static void MemberDBBuild(ArrayList<Member> memberList, ArrayList<Auth> authList) throws ParseException {
-        
-        Member mem = new Member();
-        Auth auth = new Auth();
-        Date birth = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        
-        Member mem1 = new Member();
-        mem1.setId(1);
-        mem1.setName("Kim Young Jun");
-        birth = sdf.parse("19710130");
-        mem1.setBirth(birth);
-        memberList.add(mem1);
-        
-        Auth auth1 = new Auth();
-        auth1.setMemberId(1);
-        auth1.setUserId("augustine");
-        auth1.setPw("young");
-        authList.add(auth1);
-        
-        Member mem2 = new Member();
-        mem2.setId(2);
-        mem2.setName("Kim Yu Been");
-        birth = sdf.parse("19960606");
-        mem2.setBirth(birth);
-        memberList.add(mem2);
-        
-        Auth auth2 = new Auth();
-        auth2.setMemberId(2);
-        auth2.setUserId("yubeenkim");
-        auth2.setPw("yubeen");
-        authList.add(auth2);
-        
-        Member mem3 = new Member();
-        mem3.setId(3);
-        mem3.setName("Lee Yu Jeong");
-        birth = sdf.parse("19970505");
-        mem3.setBirth(birth);
-        memberList.add(mem3);
-        
-        Auth auth3 = new Auth();
-        auth3.setMemberId(3);
-        auth3.setUserId("yujeonglee");
-        auth3.setPw("yujeong");
-        authList.add(auth3);
-        
-        Member mem4 = new Member();
-        mem4.setId(4);
-        mem4.setName("Choi Tae Hoon");
-        birth = sdf.parse("19980124");
-        mem4.setBirth(birth);
-        memberList.add(mem4);
-        
-        Auth auth4 = new Auth();
-        auth4.setMemberId(4);
-        auth4.setUserId("taehoonchoi");
-        auth4.setPw("taehoon");
-        authList.add(auth4);
-
-        
-//        for (Member m : memberList) {
-//            System.out.println(" " + m.getId() + "   " + m.getName() + "  " + m.getBirth());
-//        }
-//        
-//        for (Auth a : authList) {
-//            System.out.println(" " + a.getMemberId() + "   " + a.getUserId() + "  " + a.getPw());
-//        }
-        
-    }
     
-    private static void BookDBBuild(ArrayList<Book> bookList, ArrayList<Borrow> borrowList) throws ParseException {
-        
-        Book bk = new Book();
-        Borrow br = new Borrow();
-        Date dt = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        
-        Book bk1 = new Book();
-        bk1.setBookid(1);
-        bk1.setTitle("Java Programming");
-        bk1.setAuthor("Liang Daniel");
-        bk1.setPublisher("Pearson");
-        bookList.add(bk1);
-        
-        Borrow br1 = new Borrow();
-        br1.setBookId(1);
-        br1.setStatus(true);
-        br1.setMemberId(1);
-        dt = sdf.parse("20190601");
-        br1.setStartDay(dt);
-        dt = sdf.parse("20190615");
-        br1.setReturnDay(dt);
-        borrowList.add(br1);
-        
-        Book bk2 = new Book();
-        bk2.setBookid(2);
-        bk2.setTitle("Java Network Programming");
-        bk2.setAuthor("Elliotte Rusty");
-        bk2.setPublisher("OReilly Media");
-        bookList.add(bk2);
-        
-        Borrow br2 = new Borrow();
-        br2.setBookId(2);
-        br2.setStatus(true);
-        br2.setMemberId(2);
-        dt = sdf.parse("20190602");
-        br2.setStartDay(dt);
-        dt = sdf.parse("20190616");
-        br2.setReturnDay(dt);
-        borrowList.add(br2);
-         
-        Book bk3 = new Book();
-        bk3.setBookid(3);
-        bk3.setTitle("Java Programming");
-        bk3.setAuthor("Scott Oaks");
-        bk3.setPublisher("OReilly Media");
-        bookList.add(bk3);
-        
-        Borrow br3 = new Borrow();
-        br3.setBookId(3);
-        br3.setStatus(false);
-        //br3.setMemberId(2);
-        //dt = sdf.parse("20190602");
-        //br2.setStartDay(dt);
-        //dt = sdf.parse("20190616");
-        //br2.setReturnDay(dt);
-        borrowList.add(br3);
-        
-        Book bk4 = new Book();
-        bk4.setBookid(4);
-        bk4.setTitle("Harry Potter and the Sorcerer");
-        bk4.setAuthor("Mary GrandPre");
-        bk4.setPublisher("Scholastic");
-        bookList.add(bk4);
-        
-        Borrow br4 = new Borrow();
-        br4.setBookId(4);
-        br4.setStatus(true);
-        br4.setMemberId(4);
-        dt = sdf.parse("20190610");
-        br4.setStartDay(dt);
-        dt = sdf.parse("20190624");
-        br4.setReturnDay(dt);
-        borrowList.add(br4);
-        
-        Book bk5 = new Book();
-        bk5.setBookid(5);
-        bk5.setTitle("The Silent Patient");
-        bk5.setAuthor("Alex Michaelides");
-        bk5.setPublisher("Celadon");
-        bookList.add(bk5);
-        
-        Borrow br5 = new Borrow();
-        br5.setBookId(5);
-        br5.setStatus(true);
-        br5.setMemberId(3);
-        dt = sdf.parse("20190614");
-        br5.setStartDay(dt);
-        dt = sdf.parse("20190628");
-        br5.setReturnDay(dt);
-        borrowList.add(br5);
-        
-        Book bk6 = new Book();
-        bk6.setBookid(6);
-        bk6.setTitle("Tuesdays with Morrie");
-        bk6.setAuthor("Mitch Albom");
-        bk6.setPublisher("Anchor Books");
-        bookList.add(bk6);
-        
-        Borrow br6 = new Borrow();
-        br6.setBookId(6);
-        br6.setStatus(false);
-        //br6.setMemberId(4);
-        //dt = sdf.parse("20190610");
-        //br6.setStartDay(dt);
-        //dt = sdf.parse("20190624");
-        //br6.setReturnDay(dt);
-        borrowList.add(br6);
-        
-        Book bk7 = new Book();
-        bk7.setBookid(7);
-        bk7.setTitle("Basic Grammar In Use");
-        bk7.setAuthor("Raymond Murphy");
-        bk7.setPublisher("Cambridge");
-        bookList.add(bk7);
-        
-        Borrow br7 = new Borrow();
-        br7.setBookId(7);
-        br7.setStatus(true);
-        br7.setMemberId(1);
-        dt = sdf.parse("20190620");
-        br7.setStartDay(dt);
-        dt = sdf.parse("20190704");
-        br7.setReturnDay(dt);
-        borrowList.add(br7);
-        
-        Book bk8 = new Book();
-        bk8.setBookid(8);
-        bk8.setTitle("Aladdin");
-        bk8.setAuthor("Elkizabeth Rubnick");
-        bk8.setPublisher("Disney Press");
-        bookList.add(bk8);
-        
-        Borrow br8 = new Borrow();
-        br8.setBookId(8);
-        br8.setStatus(true);
-        br8.setMemberId(2);
-        dt = sdf.parse("20190622");
-        br8.setStartDay(dt);
-        dt = sdf.parse("20190706");
-        br8.setReturnDay(dt);
-        borrowList.add(br8);
-        
-        Book bk9 = new Book();
-        bk9.setBookid(9);
-        bk9.setTitle("Cosmos");
-        bk9.setAuthor("Carl Sagan");
-        bk9.setPublisher("Ballantine Books");
-        bookList.add(bk9);
-        
-        Borrow br9 = new Borrow();
-        br9.setBookId(9);
-        br9.setStatus(true);
-        br9.setMemberId(1);
-        dt = sdf.parse("20190621");
-        br9.setStartDay(dt);
-        dt = sdf.parse("20190705");
-        br9.setReturnDay(dt);
-        borrowList.add(br9);
-        
-        Book bk10 = new Book();
-        bk10.setBookid(10);
-        bk10.setTitle("How to Draw Almost Everthing");
-        bk10.setAuthor("Chika Miyata");
-        bk10.setPublisher("Quarry Books");
-        bookList.add(bk10);
-        
-        Borrow br10 = new Borrow();
-        br10.setBookId(10);
-        br10.setStatus(false);
-        //br10.setMemberId(4);
-        //dt = sdf.parse("20190610");
-        //br10.setStartDay(dt);
-        //dt = sdf.parse("20190624");
-        //br10.setReturnDay(dt);
-        borrowList.add(br10);
-        
-        Book bk11 = new Book();
-        bk11.setBookid(11);
-        bk11.setTitle("Homo Deus");
-        bk11.setAuthor("Yuval Noah");
-        bk11.setPublisher("Vintage");
-        bookList.add(bk11);
-        
-        Borrow br11 = new Borrow();
-        br11.setBookId(11);
-        br11.setStatus(true);
-        br11.setMemberId(4);
-        dt = sdf.parse("20190617");
-        br11.setStartDay(dt);
-        dt = sdf.parse("20190701");
-        br11.setReturnDay(dt);
-        borrowList.add(br11);
-        
-        Book bk12 = new Book();
-        bk12.setBookid(12);
-        bk12.setTitle("Guns, Germs, and Steel");
-        bk12.setAuthor("Jared Diamond");
-        bk12.setPublisher("Norton & Company");
-        bookList.add(bk12);
-        
-        Borrow br12 = new Borrow();
-        br12.setBookId(12);
-        br12.setStatus(true);
-        br12.setMemberId(4);
-        dt = sdf.parse("20190616");
-        br12.setStartDay(dt);
-        dt = sdf.parse("20190630");
-        br12.setReturnDay(dt);
-        borrowList.add(br12);
-        
-        Book bk13 = new Book();
-        bk13.setBookid(13);
-        bk13.setTitle("Nudge");
-        bk13.setAuthor("Richard Thaler");
-        bk13.setPublisher("Penguin Books");
-        bookList.add(bk13);
-        
-        Borrow br13 = new Borrow();
-        br13.setBookId(13);
-        br13.setStatus(false);
-        //br13.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br13.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br13.setReturnDay(dt);
-        borrowList.add(br13);
-        
-        Book bk14 = new Book();
-        bk14.setBookid(14);
-        bk14.setTitle("The Story of Art");
-        bk14.setAuthor("E.H. Gombrich");
-        bk14.setPublisher("Phaidon Press");
-        bookList.add(bk14);
-        
-        Borrow br14 = new Borrow();
-        br14.setBookId(14);
-        br14.setStatus(false);
-        //br14.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br14.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br14.setReturnDay(dt);
-        borrowList.add(br14);
-        
-        Book bk15 = new Book();
-        bk15.setBookid(15);
-        bk15.setTitle("The Art of Dishonored");
-        bk15.setAuthor("Bethesda Software");
-        bk15.setPublisher("Dark Horse Comics");
-        bookList.add(bk15);
-        
-        Borrow br15 = new Borrow();
-        br15.setBookId(15);
-        br15.setStatus(true);
-        br15.setMemberId(3);
-        dt = sdf.parse("20190622");
-        br15.setStartDay(dt);
-        dt = sdf.parse("20190706");
-        br15.setReturnDay(dt);
-        borrowList.add(br15);
-        
-        Book bk16 = new Book();
-        bk16.setBookid(16);
-        bk16.setTitle("Mathematical Analysis");
-        bk16.setAuthor("Walter Rudin");
-        bk16.setPublisher("McGraw Hill");
-        bookList.add(bk16);
-        
-        Borrow br16 = new Borrow();
-        br16.setBookId(16);
-        br16.setStatus(false);
-        //br16.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br16.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br16.setReturnDay(dt);
-        borrowList.add(br16);
-        
-        Book bk17 = new Book();
-        bk17.setBookid(17);
-        bk17.setTitle("Botanical Style");
-        bk17.setAuthor("Sellina Lake");
-        bk17.setPublisher("Peters & Small");
-        bookList.add(bk17);
-        
-        Borrow br17 = new Borrow();
-        br17.setBookId(17);
-        br17.setStatus(true);
-        br17.setMemberId(3);
-        dt = sdf.parse("20190620");
-        br17.setStartDay(dt);
-        dt = sdf.parse("20190704");
-        br17.setReturnDay(dt);
-        borrowList.add(br17);
-        
-        Book bk18 = new Book();
-        bk18.setBookid(18);
-        bk18.setTitle("Justice");
-        bk18.setAuthor("Michael Sandel");
-        bk18.setPublisher("Farrar Straus");
-        bookList.add(bk18);
-        
-        Borrow br18 = new Borrow();
-        br18.setBookId(18);
-        br18.setStatus(false);
-        //br18.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br18.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br18.setReturnDay(dt);
-        borrowList.add(br18);
-        
-        Book bk19 = new Book();
-        bk19.setBookid(19);
-        bk19.setTitle("The Conquest of Happiness");
-        bk19.setAuthor("Bertrand Russell");
-        bk19.setPublisher("Liveright Publishing");
-        bookList.add(bk19);
-        
-        Borrow br19 = new Borrow();
-        br19.setBookId(19);
-        br19.setStatus(true);
-        br19.setMemberId(3);
-        dt = sdf.parse("20190621");
-        br19.setStartDay(dt);
-        dt = sdf.parse("20190705");
-        br19.setReturnDay(dt);
-        borrowList.add(br19);
-        
-        Book bk20 = new Book();
-        bk20.setBookid(20);
-        bk20.setTitle("The Secret of Color");
-        bk20.setAuthor("Kassia St Clair");
-        bk20.setPublisher("Pengui Books");
-        bookList.add(bk20);
-        
-        Borrow br20 = new Borrow();
-        br20.setBookId(20);
-        br20.setStatus(false);
-        //br20.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br20.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br20.setReturnDay(dt);
-        borrowList.add(br20);
-        
-        Book bk21 = new Book();
-        bk21.setBookid(21);
-        bk21.setTitle("Outliers");
-        bk21.setAuthor("Malcolm Gladwell");
-        bk21.setPublisher("Back Bay Books");
-        bookList.add(bk21);
-        
-        Borrow br21 = new Borrow();
-        br21.setBookId(21);
-        br21.setStatus(true);
-        br21.setMemberId(3);
-        dt = sdf.parse("20190617");
-        br21.setStartDay(dt);
-        dt = sdf.parse("20190701");
-        br21.setReturnDay(dt);
-        borrowList.add(br21);
-        
-        Book bk22 = new Book();
-        bk22.setBookid(22);
-        bk22.setTitle("The Tipping Point");
-        bk22.setAuthor("Malcolm Gladwell");
-        bk22.setPublisher("Back Bay Books");
-        bookList.add(bk22);
-        
-        Borrow br22 = new Borrow();
-        br22.setBookId(22);
-        br22.setStatus(false);
-        //br22.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br22.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br22.setReturnDay(dt);
-        borrowList.add(br22);
-        
-        Book bk23 = new Book();
-        bk23.setBookid(23);
-        bk23.setTitle("The Sisappearing Spoon");
-        bk23.setAuthor("Sam Kean");
-        bk23.setPublisher("Back Bay Books");
-        bookList.add(bk23);
-        
-        Borrow br23 = new Borrow();
-        br23.setBookId(23);
-        br23.setStatus(false);
-        //br23.setMemberId(4);
-        //dt = sdf.parse("20190617");
-        //br23.setStartDay(dt);
-        //dt = sdf.parse("20190701");
-        //br23.setReturnDay(dt);
-        borrowList.add(br23);
-        
-        Book bk24 = new Book();
-        bk24.setBookid(24);
-        bk24.setTitle("Treasures of Botanical Art");
-        bk24.setAuthor("Shirley Sherwood");
-        bk24.setPublisher("Royal Botanic Gardens Kew");
-        bookList.add(bk24);
-        
-        Borrow br24 = new Borrow();
-        br24.setBookId(24);
-        br24.setStatus(true);
-        br24.setMemberId(2);
-        dt = sdf.parse("20190611");
-        br24.setStartDay(dt);
-        dt = sdf.parse("20190625");
-        br24.setReturnDay(dt);
-        borrowList.add(br24);
-        
-        Book bk25 = new Book();
-        bk25.setBookid(25);
-        bk25.setTitle("Coree a Coeur");
-        bk25.setAuthor("Ida Daussy");
-        bk25.setPublisher("Ateller Des Cahiers");
-        bookList.add(bk25);
-        
-        Borrow br25 = new Borrow();
-        br25.setBookId(25);
-        br25.setStatus(true);
-        br25.setMemberId(4);
-        dt = sdf.parse("20190622");
-        br25.setStartDay(dt);
-        dt = sdf.parse("20190706");
-        br25.setReturnDay(dt);
-        borrowList.add(br25);
-        
-        Book bk26 = new Book();
-        bk26.setBookid(26);
-        bk26.setTitle("Choose the Right Word");
-        bk26.setAuthor("Samuel Hayakawa");
-        bk26.setPublisher("Harpercollins");
-        bookList.add(bk26);
-        
-        Borrow br26 = new Borrow();
-        br26.setBookId(26);
-        br26.setStatus(true);
-        br26.setMemberId(3);
-        dt = sdf.parse("20190621");
-        br26.setStartDay(dt);
-        dt = sdf.parse("20190705");
-        br26.setReturnDay(dt);
-        borrowList.add(br26);
-        
-//        for (Book b : bookList) {
-//            System.out.println(" " + b.getBookid() + "   " + b.getTitle() + "  " + b.getAuthor() + "   " + b.getPublisher());
-//        }
-//        
-//        for (Borrow brw : borrowList) {
-//            System.out.println(" " + brw.getBookId() + "   " + brw.isStatus() + "  " + brw.getMemberId() + "  " + brw.getStartDay() + "  " + brw.getReturnDay());
-//        }
-        
-        
-    }
+                    }
+                    */
+                    
+                }else {
+                    System.out.print("ÏûòÎ™ªÏûÖÎ†•ÌïòÏÖ®ÏäµÎãàÎã§. ");
+                    returnRepeat = true;
+                }
+            }
 
-    private static String convertToSha2(String pw) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(pw.getBytes("UTF-8"));
-        StringBuilder convertedPW = new StringBuilder();
-        for (int j : hash) {
-            convertedPW.append(String.format("%02x", 0XFF & j));
+        } else { // Î∞òÎÇ©Ìï† ÎèÑÏÑúÍ∞Ä ÏóÜÎã§Î©¥
+            System.out.println("Î∞òÎÇ©Ìï† ÎèÑÏÑúÍ∞Ä ÏóÜÏäµÎãàÎã§.");
         }
-        return convertedPW.toString();
+
     }
 
-    private static Date stringtodate(String date) throws ParseException {
-        SimpleDateFormat transFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String beforechange = date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, 8);
-        Date birth = transFormat.parse(beforechange);
-        return birth;
+    // ÏÇ¨Ïö©Ïûê ÎåÄÏó¨ÌòÑÌô© Î¶¨Ïä§Ìä∏ Î©îÏÜåÎìú
+    private static void memberRentalList(int member, ArrayList<Member> memberList, ArrayList<Book> bookList,
+            ArrayList<Borrow> borrowList, Scanner sc) {
+        // ÏÇ¨Ïö©ÏûêÎåÄÏó¨ÌòÑÌô© Î¶¨Ïä§Ìä∏ Ï∂úÎ†•
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        System.out.println("< " + memberList.get(member-1).getName() + "Îãò  ÎåÄÏ∂ú ÎèÑÏÑú Î¶¨Ïä§Ìä∏ >");
+        System.out.println(
+                "----------------------------------------------------------------------------------------------------------------------------------------------------");
+        System.out.println("BookNum" + "\t\t" + "title" + "\t\t\t\t" + "author" + "\t\t\t\t" + "publisher" + "\t\t\t" + "rentalDate" + "\t" + "returnDate");
+        System.out.println(
+                "----------------------------------------------------------------------------------------------------------------------------------------------------");
+        //for (int i = 0; i < borrowList.size(); i++) {
+        //    if ((borrowList.get(i).getMemberId() == member)) {
+        //        System.out.printf("%2d %-35s %-35s %-35s %-15s %-15s\n", borrowList.get(i).getBookId(),
+        //                bookList.get(i).getTitle(), bookList.get(i).getAuthor(), bookList.get(i).getPublisher(),
+        //                sdf.format(borrowList.get(i).getStartDay()), sdf.format(borrowList.get(i).getReturnDay()));
+        //    }
+        //}
+        //ArrayList<Book> tbookList = new ArrayList<>();
+        ArrayList<Borrow> tborrowList = new ArrayList<>();
+        //Borrow tmpbr = new Borrow();
+        
+        for (Borrow br : borrowList) {
+            if (br.getMemberId() == member) {
+                if (br.isStatus()) {
+                    tborrowList.add(br);
+                } else {
+                      for (Borrow tbr : tborrowList) {
+                        if (tbr.getBookId() == (br.getBookId())) {
+                            tborrowList.remove(tborrowList.indexOf(tbr));
+                        }
+                    }
+                }
+            } 
+        }
+        
+        for (Borrow tbr : tborrowList) {
+            System.out.printf("%2d  %-35s\n", tbr.getBookId(), bookList.get(tbr.getBookId()).getTitle());
+        }
     }
 
 }
