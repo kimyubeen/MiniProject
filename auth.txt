@@ -1,0 +1,1 @@
+[{"memberId":1,"userId":"augustine","pw":"young"}, {"memberId":2,"userId":"yubeenkim","pw":"yubeen"}, {"memberId":3,"userId":"yujeonglee","pw":"yujeong"}, {"memberId":4,"userId":"taehoonchoi","pw":"taehoon"}]
